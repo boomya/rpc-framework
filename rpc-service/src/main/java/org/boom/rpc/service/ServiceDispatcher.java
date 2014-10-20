@@ -6,6 +6,7 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import org.boom.rpc.common.edecode.DecodeEnodeFactory;
 import org.boom.rpc.common.edecode.ParamEncodeDecode;
+import org.boom.rpc.example.JSONDecodeEncode;
 import org.boom.rpc.interceptor.Interceptor;
 import org.boom.rpc.interceptor.InterceptorFactory;
 import org.boom.rpc.protobuf.LesenRPCProto.Error;
@@ -63,10 +64,15 @@ public class ServiceDispatcher extends
 
 	private void processRequest(ChannelHandlerContext ctx, LesenRPCRequest msg) {
 		try {
+            System.out.println("============processRequest 1");
 			Object obj = invokeLocalService(msg);
+            System.out.println("============processRequest 2");
 			LesenRPCResponse response = encodResult(obj, msg);
+            System.out.println("============processRequest 3");
 			response.getSerializedSize();
+            System.out.println("============processRequest 4");
 			ctx.writeAndFlush(response);
+            System.out.println("============processRequest 5");
 		} catch (Exception e) {
 			processInvokeError(ctx, msg, e);
 		}
@@ -83,7 +89,8 @@ public class ServiceDispatcher extends
 	}
 
 	private LesenRPCResponse encodResult(Object obj, LesenRPCRequest msg) {
-		ParamEncodeDecode encode = decodeEnodeFactory.getEncodeDecode(obj);
+//		ParamEncodeDecode encode = decodeEnodeFactory.getEncodeDecode(obj);
+        ParamEncodeDecode encode = decodeEnodeFactory.getEncodeDecodeByName("JSON");
 		LesenRPCResponse.Builder builder = LesenRPCResponse.newBuilder();
 		LesenRPCResult.Builder resBuilder = LesenRPCResult.newBuilder();
 		builder.setServiceName(msg.getServiceName());
@@ -101,13 +108,14 @@ public class ServiceDispatcher extends
 
 	private Object invokeLocalService(LesenRPCRequest msg) throws Exception {
 		Method mth = getServiceMatchMethod(msg);
+        Class<?>[] parameterTypes = mth.getParameterTypes();
 		Object service = servicesManager.getService(msg.getServiceName());
-		Object[] args = parserParmater(msg);
+		Object[] args = parserParmater(msg, parameterTypes);
 		Object obj = mth.invoke(service, args);
 		return obj;
 	}
 
-	private Object[] parserParmater(LesenRPCRequest msg) {
+	private Object[] parserParmater(LesenRPCRequest msg, Class<?>[] parameterTypes) {
 		List<LesenRPCParameter> parms = msg.getParamsList();
 		int size = parms.size();
 		ParamEncodeDecode encodeDecode;
@@ -119,7 +127,12 @@ public class ServiceDispatcher extends
 			ByteString value = pa.getValue();
 			byte[] byteArray = value.toByteArray();
 			encodeDecode = manager.getEncodeDecode(paramType);
-			objs[i] = encodeDecode.decode(byteArray);
+            if (encodeDecode instanceof JSONDecodeEncode){
+                objs[i] = ((JSONDecodeEncode)encodeDecode).decode(byteArray, paramType);
+            }else{
+                objs[i] = encodeDecode.decode(byteArray);
+            }
+
 		}
 		return objs;
 	}

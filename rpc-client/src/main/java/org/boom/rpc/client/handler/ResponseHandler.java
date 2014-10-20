@@ -6,6 +6,10 @@ public interface ResponseHandler {
 
 	void onResponse(LesenRPCResponse response);
 
+    void writeResult(LesenRPCResponse response);
+
+    Object getResult();
+
 	Object getReault();
 
 	Exception getException();

@@ -28,6 +28,10 @@ public class DecodeEnodeFactory {
 		return getEncodeDecode(obj.getClass().getName());
 	}
 
+    public ParamEncodeDecode getEncodeDecodeByName(String name) {
+        return getEncodeDecode(name);
+    }
+
 	public ParamEncodeDecode getEncodeDecode(String clsName) {
 		String objClsName = convertPrimitTypeToObjType(clsName);
 		ParamEncodeDecode objectEDer = decodeEncodes.get(objClsName);
@@ -35,7 +39,7 @@ public class DecodeEnodeFactory {
 	}
 
 	private String convertPrimitTypeToObjType(String clsName) {
-		if (clsName.equals("int"))
+		if (clsName.equals("int") || ("java.lang.Integer").equals(clsName))
 			return Integer.class.getName();
 		if (clsName.equals("long"))
 			return Long.class.getName();
@@ -49,7 +53,11 @@ public class DecodeEnodeFactory {
 			return Byte.class.getName();
 		if (clsName.equals("short"))
 			return Short.class.getName();
-		return clsName;
+        if ("java.lang.String".equals(clsName)){
+            return String.class.getName();
+        }
+//		return clsName;
+        return "JSON";
 	}
 
 	public Object parser(LesenRPCProto.LesenRPCResult result) {

@@ -42,17 +42,29 @@ public class RemoteServiceProxy implements InvocationHandler {
 		builder.setServiceName(serverName);
 		builder.setMethodName(method.getName());
 
+        Class<?>[] parameterTypes = method.getParameterTypes();
+
 		if (arg != null) {
 			ParamEncodeDecode edobj;
-			for (Object object : arg) {
-				edobj = enodeFactory.getEncodeDecode(object);
-				parBuilder.setType(edobj.getTypeName());
-				parBuilder.setValue(ByteString.copyFrom(edobj.encode(object)));
-				builder.addParams(parBuilder.build());
-			}
+            for(int i=0; i<arg.length; i++){
+                Object object = arg[i];
+                edobj = enodeFactory.getEncodeDecode(object);
+//                parBuilder.setType(edobj.getTypeName());
+                parBuilder.setType(parameterTypes[i].getName());
+                System.out.println("-------getTypeName():" + parameterTypes[i].getName());
+                parBuilder.setValue(ByteString.copyFrom(edobj.encode(object)));
+                builder.addParams(parBuilder.build());
+            }
+//			for (Object object : arg) {
+//				edobj = enodeFactory.getEncodeDecode(object);
+//				parBuilder.setType(edobj.getTypeName());
+//                System.out.println("-------edobj.getTypeName():" + edobj.getTypeName());
+//				parBuilder.setValue(ByteString.copyFrom(edobj.encode(object)));
+//				builder.addParams(parBuilder.build());
+//			}
 		}
 		LesenRPCRequest request = builder.build();
-		return transport.call(request);
+		return transport.call(request, method.getReturnType());
 	}
 
 	

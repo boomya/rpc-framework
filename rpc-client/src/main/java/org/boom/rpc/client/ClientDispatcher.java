@@ -19,7 +19,8 @@ class ClientDispatcher extends ChannelInboundHandlerAdapter {
 		LesenRPCResponse response = (LesenRPCResponse) msg;
 		String serviceName = response.getServiceName();
 		ResponseHandler handler = handlerFactory.getHandler(serviceName);
-		handler.onResponse(response);
+//		handler.onResponse(response);
+        handler.writeResult(response);
 	}
 
 	@Override

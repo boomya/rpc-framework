@@ -41,21 +41,31 @@ public class ClientTransport {
 		this.handlerFactory = handlerFactory;
 	}
 
-	public Object call(LesenRPCRequest request) throws Exception {
+	public Object call(LesenRPCRequest request, Class<?> clazz) throws Exception {
 		Thread requestThread = Thread.currentThread();
-		SyncResponseHandler syncHandler = new SyncResponseHandler(requestThread);
+		SyncResponseHandler syncHandler = new SyncResponseHandler(requestThread, clazz);
 		String remoteServiceName = request.getServiceName();
 		handlerFactory.registHandler(remoteServiceName, syncHandler);
 		channel.writeAndFlush(request);
-		try {
-			Thread.sleep(requestTimeout);
-			RuntimeException exception = createTimeoutException(request);
-			throw exception;
-		} catch (InterruptedException e) {
-			Thread.interrupted();
-			checkHasException(syncHandler);
-			return syncHandler.getReault();
-		}
+
+        Object result = syncHandler.getResult();
+        if(result == null){
+            RuntimeException exception = createTimeoutException(request);
+            throw exception;
+        }else if(result instanceof Exception){
+            throw (Exception) result;
+        }else{
+            return result;
+        }
+//		try {
+//			Thread.sleep(requestTimeout);
+//			RuntimeException exception = createTimeoutException(request);
+//			throw exception;
+//		} catch (InterruptedException e) {
+//			Thread.interrupted();
+//			checkHasException(syncHandler);
+//			return syncHandler.getReault();
+//		}
 	}
 
 	private void checkHasException(SyncResponseHandler syncHandler)
